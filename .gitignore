@@ -4,3 +4,5 @@ ext-tools
 *.iml
 .classpath
 .project
+/bin/
+root.log
