@@ -1,7 +1,9 @@
 package edu.usc.softarch.arcade.clustering;
 
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -17,6 +19,7 @@ import edu.usc.softarch.arcade.config.Config.Granule;
 import edu.usc.softarch.arcade.config.Config.Language;
 import edu.usc.softarch.arcade.util.FileListing;
 
+
 public class ClusteringAlgoRunner {
 
 	private static Logger logger = Logger.getLogger(ClusteringAlgoRunner.class);
@@ -31,10 +34,16 @@ public class ClusteringAlgoRunner {
 	protected static int numClustersAtMaxClusterGain = 0;
 	protected static int numberOfEntitiesToBeClustered = 0;
 	
-	protected static void initializeClusters(String srcDir) {
+//	creates a list of fastCluster called fastClusters
+//	create fastCluster for every Feature in fastFeatureVector
+//	create fastCluster for every java file in srcDir
+	protected static void initializeClusters(String srcDir) throws IOException {
+//		FileWriter fw = new FileWriter("/Users/retina15/Desktop/ConcernAlgoRunner.txt");
+//		fw.write("initializeClusters(srcDir) Called by ConcernClusteringRunner constructor\n");
 		fastClusters = new ArrayList<FastCluster>();
 
 		for (String name : fastFeatureVectors.getFeatureVectorNames()) {
+//			fw.write("name : " + name + "\n");
 			BitSet featureSet = (BitSet) fastFeatureVectors
 					.getNameToFeatureSetMap().get(name);
 			FastCluster fastCluster = new FastCluster(name, featureSet,
@@ -44,14 +53,16 @@ public class ClusteringAlgoRunner {
 		}
 		
 		
-		
+//		Create a Fast cluster for every java file
 		try {
 			if (fastClusters.isEmpty()) {
+//				fw.write("fastClusters was empty \n");
 				List<File> javaFiles = FileListing.getFileListing(new File(srcDir),
 						".java");
 				
 				for (File javaFile : javaFiles) {
 					FastCluster cluster = new FastCluster(javaFile.getPath().toString());
+//					fw.write("javaFile Name : " + javaFile.getPath().toString() + "\n");
 					fastClusters.add(cluster);
 				}
 			}
@@ -59,20 +70,29 @@ public class ClusteringAlgoRunner {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+//		List<File> javaFiles = FileListing.getFileListing(new File(srcDir),
+//				".java");
+//		System.out.println(javaFiles.toString());
+		
+		FastCluster myCluster = new FastCluster("/Users/retina15/Documents/CS578-arcade/../CS578/hw3/CWE287-Test/src/tomcat7/java/vul.java");
+		fastClusters.add(myCluster);
 		logger.debug("Listing initial cluster names using for-each...");
+//		fw.write("List of fastCluster in fastClusters : \n");
 		for (FastCluster cluster : fastClusters) {
 			logger.debug(cluster.getName());
+//			fw.write(cluster.getName() + "\n");
 		}
-
-		logger.debug("Listing initial cluster names using indexed loop...");
-		for (int i = 0; i < fastClusters.size(); i++) {
-			FastCluster cluster = (FastCluster) fastClusters.get(i);
-			logger.debug(cluster.getName());
-		}
+		
+//		logger.debug("Listing initial cluster names using indexed loop...");
+//		for (int i = 0; i < fastClusters.size(); i++) {
+//			FastCluster cluster = (FastCluster) fastClusters.get(i);
+//			logger.debug(cluster.getName());
+//		}
 
 		numberOfEntitiesToBeClustered = fastClusters.size();
 		logger.debug("number of initial clusters: " + numberOfEntitiesToBeClustered);
+//		fw.write("Number of initial clusters (fastClusters) : " + numberOfEntitiesToBeClustered);
+//		fw.close();
 
 	}
 

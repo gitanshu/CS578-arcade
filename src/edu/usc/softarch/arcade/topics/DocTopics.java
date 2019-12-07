@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -47,9 +48,11 @@ public class DocTopics {
 	}
 	
 	public DocTopics(String srcDir, String artifactsDir, int numTopics, String topicModelFilename, String docTopicsFilename, String topWordsFilename) throws Exception {
+//		FileWriter fw = new FileWriter("/Users/retina15/Desktop/DocTopics.txt");
+//		fw.write("Creating DocTopics, called by ConcernClusteringRunner -> initializeDocTopicsForEachFastCluster \n");
 		// Begin by importing documents from text to feature sequences
 		ArrayList<Pipe> pipeList = new ArrayList<Pipe>();
-		numTopics =100;
+		numTopics = 2;
 		// Pipes: alphanumeric only, camel case separation, lowercase, tokenize,
 		// remove stopwords english, remove stopwords java, stem, map to
 		// features
@@ -77,8 +80,15 @@ public class DocTopics {
 		InstanceList instances = new InstanceList(new SerialPipes(pipeList));
 		String testDir = srcDir;
 		logger.debug("Building instances for mallet...");
+//		fw.write("Creating instances :");
+		
+//		go through every file in srcDir
+//		if it is a java file create an instance (data in the file, 'x', fullClassName, path)
+//		add the instance to instances
+//		
 		for (File file : FileListing.getFileListing(new File(testDir))) {
 			logger.debug("Should I add " + file.getName() + " to instances?");
+//			fw.write("Should " + file.getName() + " be added to instances? \n");
 			if (file.isFile() && file.getName().endsWith(".java")) {
 				String shortClassName = file.getName().replace(".java", "");
 				BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -89,10 +99,12 @@ public class DocTopics {
 					if (packageName != null) {
 						fullClassName = packageName + "." + shortClassName;
 						logger.debug("\t I've identified the following full class name from analyzing files: " + fullClassName);
+//						fw.write("\t identified the following full class name from analyzing files: " + fullClassName + "\n");
 					}
 				}
 				reader.close();
 				logger.debug("I'm going to add this file to instances: " + file);
+//				fw.write("Adding to instances: " + file);
 				String data = FileUtil.readFile(file.getAbsolutePath(),
 						Charset.defaultCharset());
 				Instance instance = new Instance(data, "X", fullClassName,
@@ -112,17 +124,8 @@ public class DocTopics {
 			}
 		}
 		
-//		
-//		InstanceList previousInstances;
-//		File preIns = new File("tmp/int.data");
-//		if (preIns.exists()){
-//			previousInstances = InstanceList.load(preIns);
-//		}else
-//		{
-//			previousInstances = instances;
-//		}
-//		//save for next time
-//		instances.save(new File("tmp/int.data"));
+//		fw.write("\n created and added instance created from java files to instances");
+
 		InstanceList previousInstances = InstanceList.load(new File(artifactsDir+"/output.pipe"));
 		
 		/*
@@ -146,53 +149,41 @@ public class DocTopics {
 		TopicInferencer inferencer = 
 				TopicInferencer.read(new File(artifactsDir+"/infer.mallet"));
 		
-//		if (topicModelFile.exists()) {
-//			try {
-//				model = ParallelTopicModel.read(topicModelFile);
-//			} catch (Exception e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		} else {
-//			model = new ParallelTopicModel(numTopics, alpha, beta);
-//			model.addInstances(instances);
-//			
-//			// Use two parallel samplers, which each look at one half the corpus and
-//			// combine
-//			// statistics after every iteration.
-//			model.setNumThreads(2);
-//
-//			// Run the model for 50 iterations and stop (this is for testing only,
-//			// for real applications, use 1000 to 2000 iterations)
-//			int numIterations = 1000;
-//			model.setNumIterations(numIterations);
-//			model.setRandomSeed(10);
-//			model.estimate();
-//			model.write(topicModelFile);
-//			model.printDocumentTopics(docTopicsFile);
-//			boolean useNewLines = false;
-//			int numTopWords = 20;
-//			model.printTopWords(topWordsFile, numTopWords, useNewLines);
-//		}
+		
+//		create dtItem for every instance from output.pipe 
+//		dtItem has a list of TopicItem called topics
+//		
 		
 		for (int instIndex = 0; instIndex < previousInstances.size(); instIndex++) {
+//			fw.write("instIndex : " + instIndex + " previousInstances.size() : " + previousInstances.size() + "\n");
 			DocTopicItem dtItem = new DocTopicItem();
 			dtItem.doc = instIndex;
 			dtItem.source = (String) previousInstances.get(instIndex).getName();
-
+			
+//			fw.write("dtItem.doc : " +  instIndex);
+//			fw.write("dtItem.source : " + (String) previousInstances.get(instIndex).getName() + " \n");
 			dtItem.topics = new ArrayList<TopicItem>();
 
 //			double[] topicDistribution = model.getTopicProbabilities(instIndex);
-			double[] topicDistribution = inferencer.getSampledDistribution(previousInstances.get(instIndex), 1000, 10, 10);
+			double[] topicDistribution = inferencer.getSampledDistribution(previousInstances.get(instIndex), 10, 1, 5);
+//			fw.write("len topicdistributoin" + topicDistribution.length + "\n");
+			for (int j = 0; j < topicDistribution.length; j++) {
+//				fw.write(topicDistribution[j] + "  ");
+			}
+//			fw.write("\n");
 			for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
 				TopicItem t = new TopicItem();
 				t.topicNum = topicIdx;
 				t.proportion = topicDistribution[topicIdx];
 				dtItem.topics.add(t);
+//				fw.write("\t added TopicItem \n");
 			}
 			dtItemList.add(dtItem);
 
 		}
+		
+//		fw.write("\n Done with DocTopics");
+//		fw.close();
 		
 	}
 	
@@ -205,6 +196,7 @@ public class DocTopics {
 	}
 	
 	public DocTopicItem getDocTopicItemForJava(String name) {
+//		return the a DocTopicItem with the same name 
 		for (DocTopicItem dti : dtItemList) {
 			String altName = name.replaceAll("/", ".").replaceAll(".java", "").trim();
 			if (dti.source.endsWith(name)) {

@@ -1,6 +1,7 @@
 package edu.usc.softarch.arcade.facts.driver;
 
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -27,7 +28,6 @@ import edu.usc.softarch.arcade.util.FileUtil;
 public class JavaSourceToDepsBuilder implements SourceToDepsBuilder {
 	
 	static Logger logger = Logger.getLogger(JavaSourceToDepsBuilder.class);
-
 	public Set<Pair<String,String>> edges;
 	public static FastFeatureVectors ffVecs = null;
 	public int numSourceEntities = 0;
@@ -49,7 +49,6 @@ public class JavaSourceToDepsBuilder implements SourceToDepsBuilder {
 	public void build(String[] args) throws IOException,
 			FileNotFoundException {
 		PropertyConfigurator.configure(Config.getLoggingConfigFilename());
-		
 		String[] inputClasses = { FileUtil.tildeExpandPath(args[0]) };
 		String depsRsfFilename = FileUtil.tildeExpandPath(args[1]);
 		
@@ -61,18 +60,24 @@ public class JavaSourceToDepsBuilder implements SourceToDepsBuilder {
 		PrintWriter writer = new PrintWriter(out);
 		AtomicVertex[] graph = analyzer.getClassGraph();
 		
+//		FileWriter fw = new FileWriter("/Users/retina15/Desktop/javasourcetodep.txt");
+		
 		edges = new LinkedHashSet<Pair<String,String>>();
 		for (int i = 0; i < graph.length; i++) {
 			AtomicVertex vertex = graph[i];
 			ClassAttributes sourceAttributes = (ClassAttributes)vertex.getAttributes();
 			//writer.println(sourceAttributes.getType() +  " " + sourceAttributes.getName());
+//			fw.write("sourceAttributes : " + sourceAttributes.getName() + "\n");
+			
 			for (int j = 0, n = vertex.getNumberOfOutgoingArcs(); j < n; j++) {
 				ClassAttributes targetAttributes = (ClassAttributes)vertex.getHeadVertex(j).getAttributes();
 				//writer.println("    " + targetAttributes.getType() + " " + targetAttributes.getName());
 				Pair<String,String> edge = new ImmutablePair<String,String>(sourceAttributes.getName(),targetAttributes.getName());
+//				fw.write("\t targeAttributes : " + targetAttributes.getName() + "\n" );
 				edges.add(edge);
 			}
 		}
+//		fw.close();
 		
 		for (Pair<String,String> edge : edges) {
 			writer.println("depends " + edge.getLeft() + " " + edge.getRight());

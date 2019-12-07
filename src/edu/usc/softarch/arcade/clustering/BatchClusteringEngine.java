@@ -3,6 +3,7 @@ package edu.usc.softarch.arcade.clustering;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -58,21 +59,16 @@ public class BatchClusteringEngine {
 
 	}
 	public static void single (File folder,String[] args,String outputDirName,String inClassesDir) throws Exception{
+		
+//		FileWriter fw = new FileWriter("/Users/retina15/Desktop/bce.txt");
+		
+		
 		if (folder.isDirectory()) {
 			logger.debug("Processing directory: " + folder.getName());
+//			fw.write("Processing Directory: " + folder.getName());
 			String revisionNumber = folder.getName();
 			String fullClassesDir = folder.getAbsolutePath() + File.separatorChar + inClassesDir;
-			//			Handle classes for cxf
-//			String fullClassesDir = folder.getAbsolutePath().substring(0, folder.getAbsolutePath().length()-4).replace("src", "binary") + File.separatorChar + inClassesDir;
-			//			Handle classes for camel
-//			String fullClassesDir = folder.getAbsolutePath().replace("src", "bin") + File.separatorChar + inClassesDir;
-			// Handle calasses for  wicket 6.0
-//			String fullClassesDir = folder.getAbsolutePath().replace("src_2", "bin") + "-bin" + File.separatorChar + inClassesDir;		
-			// Handle calasses for  nutch 
-//			String fullClassesDir = folder.getAbsolutePath().replace("src", "bin") + "-bin" + File.separatorChar + inClassesDir;
-			// Handle calasses for  openjpa 
-//			String fullClassesDir = folder.getAbsolutePath().replace("src", "bin").replace("-source", "") + File.separatorChar + inClassesDir;
-			
+		
 			File classesDirFile = new File(fullClassesDir);
 			if (!classesDirFile.exists()) {
 				throw new Exception ("classDir is not exist");
@@ -98,7 +94,9 @@ public class BatchClusteringEngine {
 			}
 			 
 
-			int numTopics = (int) ((double) builder.getNumSourceEntities() * 0.18);
+//			int numTopics = (int) ((double) builder.getNumSourceEntities() * 0.18);
+			int numTopics = 2;
+//			fw.write("\n numTopics Calcuated: " + numTopics);
 			String fullSrcDir = folder.getAbsolutePath() + File.separatorChar;
 			String topicModelFilename = outputDirName + File.separatorChar
 					+ revisionNumber + "_" + numTopics + "_topics.mallet";
@@ -113,20 +111,20 @@ public class BatchClusteringEngine {
 				}
 			}
 			
+//			fw.write("\n Creating ConcernClusteringRunner \n Featurenames: \n" + builder.getFfVecs().getFeatureVectorNames());
 			ConcernClusteringRunner runner = new ConcernClusteringRunner(
 					builder.getFfVecs(),
 					TopicModelExtractionMethod.MALLET_API, fullSrcDir,
 					outputDirName+"/base", numTopics, topicModelFilename, docTopicsFilename, topWordsFilename);
-
+			
+//			fw.write("ConcernClusteringRunner Created \n");
 			// have to set some Config settings before executing the runner
-			int numClusters = (int) ((double) runner.getFastClusters()
-					.size() * .20); // number of clusters to obtain is based
-									// on the number of entities
+			int numClusters = 1; 
 			Config.setNumClusters(numClusters);
 			Config.stoppingCriterion = StoppingCriterionConfig.preselected;
 			Config.setCurrSimMeasure(SimMeasure.js);
 			runner.computeClustersWithConcernsAndFastClusters(new PreSelectedStoppingCriterion());
-
+			
 			String arcClustersFilename = outputDirName + File.separatorChar
 					+ revisionNumber + "_" + numTopics + "_topics_"
 					+ runner.getFastClusters().size() + "_arc_clusters.rsf";
@@ -152,6 +150,7 @@ public class BatchClusteringEngine {
 					+ revisionNumber);
 			ArchSmellDetector.runAllDetectionAlgs(detectedSmellsFilename);
 		}
+//		fw.close();
 	}
 
 }
